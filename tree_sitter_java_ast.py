@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from tree_sitter import Language, Parser
 
 # Path to build the language library
@@ -62,13 +63,19 @@ def main():
     parser = load_java_parser()
     java_files = find_java_files(codebase_dir)
     print(f"Found {len(java_files)} Java files.")
+    asts = {}
     for java_file in java_files:
         with open(java_file, 'rb') as f:
             source_code = f.read()
         tree = parser.parse(source_code)
         ast = ast_to_dict(tree.root_node, source_code)
-        print(f"AST for {java_file}:")
-        print(ast)  # You may want to pretty-print or serialize this as JSON
+        asts[java_file] = ast
+    # Save ASTs to file named after the directory
+    dir_name = os.path.basename(os.path.normpath(codebase_dir))
+    output_filename = f"{dir_name}_ast.json"
+    with open(output_filename, 'w', encoding='utf-8') as out_f:
+        json.dump(asts, out_f, ensure_ascii=False, indent=2)
+    print(f"Saved ASTs for {len(java_files)} Java files to {output_filename}")
 
 if __name__ == "__main__":
     main()
